@@ -84,10 +84,31 @@ var tweenWithCollisionDetection = function(endData) {
 };
 
 // MAKE THE PLAYER DRAGGABLE
-function mover() {
+var mover = function () {
+  var minX = 0;
+  var maxX = gameOptions.width - parseInt(d3.select('image').attr('width'));
+  var minY = 0;
+  var maxY = gameOptions.height - parseInt(d3.select('image').attr('height'));
+
+  if (d3.event.x < minX) {
+    var x = 0;
+  } else if (d3.event.x > maxX) {
+    var x = maxX;
+  } else {
+    var x = d3.event.x;
+  }
+
+  if (d3.event.y < minY) {
+    var y = 0;
+  } else if (d3.event.y > maxY) {
+    var y = maxY;
+  } else {
+    var y = d3.event.y;
+  }
+
   d3.select('image')
-    .attr("x", d3.event.x - parseInt(d3.select('image').attr("width")) / 2)
-    .attr("y", d3.event.y - parseInt(d3.select('image').attr("height")) / 2);
+    .attr("x", x)
+    .attr("y", y);
 };
 
 var drag = d3.behavior.drag().on("drag", mover);
