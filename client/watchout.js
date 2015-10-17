@@ -22,7 +22,7 @@ var board = d3.select('body').append('svg')
 // ENEMY STUFF
 // create enemies
 var enemies = board.selectAll('.enemies')
-                    .data(d3.range(30))
+                    .data(d3.range(gameOptions.nEnemies))
                     .enter()
                     .append('circle')
                     .attr('cx', function() {
@@ -62,7 +62,16 @@ var checkCollision = function(enemy) {
   var playerCy = parseFloat(player.attr('y'));
 
   if (Math.hypot(enemyCx - playerCx, enemyCy - playerCy ) <= 25) {
-    console.log("UHOH!!");
+    // update high schore if needed
+    console.log("MUAHAHAA!!!");
+    // reset score to 0
+    // REFACTOR
+    if (gameStats.score > gameStats.bestScore) {
+      gameStats.bestScore = gameStats.score;
+      d3.select('.high span').text(gameStats.bestScore);
+    }
+    gameStats.score = 0;
+    renderScore();
   }
 };
 
@@ -85,5 +94,17 @@ var drag = d3.behavior.drag().on("drag", mover);
 
 d3.select("image").call(drag);
 
+
+// SCORE STUFF
+var increaseScore = function() {
+  gameStats.score++;
+  renderScore();
+};
+
+var renderScore = function() {
+  d3.select('.current span').text(gameStats.score);
+};
+
 // MAKE STUFF MOVE!! :D
 setInterval(moveEnemies, 2000);
+setInterval(increaseScore, 1000);
