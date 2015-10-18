@@ -1,8 +1,8 @@
 // GENERAL STUFF
 // define gameOptions
 var gameOptions = {
-  height: 450,
-  width: 700,
+  height: 550,
+  width: 900,
   nEnemies: 30,
   padding: 20
 };
@@ -14,46 +14,63 @@ var gameStats = {
 
 // create board
 var board = d3.select('body').append('svg')
-                             .attr('height', gameOptions.height)
-                             .attr('width', gameOptions.width)
-                             .style('background-color', 'blue');
+  .attr('height', gameOptions.height)
+  .attr('width', gameOptions.width)
+  .style('background-color', 'teal')
+   .style('display', 'block')
+    .style('margin', 'auto');
 
 
 // ENEMY STUFF
 // create enemies
 var enemies = board.selectAll('.enemies')
-                    .data(d3.range(gameOptions.nEnemies))
-                    .enter()
-                    .append('circle')
-                    .attr('cx', function() {
-                      return (Math.random() * gameOptions.width);
-                    })
-                    .attr('cy', function() {
-                      return (Math.random() * gameOptions.width);
-                    })
-                    .attr('r', 10)
-                    .attr('fill', 'red');
+  .data(d3.range(gameOptions.nEnemies))
+  .enter()
+  .append('ellipse')
+  .attr('rx', 5)
+  .attr('ry', 14)
+  .attr('cx', function() {
+    return (Math.random() * gameOptions.width);
+  })
+  .attr('cy', function() {
+    return (Math.random() * gameOptions.width);
+  })
+  .attr('fill', 'deepPink');
+
 
 var moveEnemies = function() {
   enemies.transition()
-         .duration(2000)
-         .attr('cx', function(){
-           return (Math.random() * gameOptions.width);
-         })
-         .attr('cy', function(){
-           return(Math.random() * gameOptions.width);
-         })
-         .tween('custom', tweenWithCollisionDetection);
+    .duration(2000)
+    .attr('cx', function() {
+      return (Math.random() * gameOptions.width);
+    })
+    .attr('cy', function() {
+      return (Math.random() * gameOptions.width);
+    })
+    .tween('custom', tweenWithCollisionDetection);
 };
+
+var boxes = document.querySelectorAll('ellipse');
+var twween = TweenLite.to({}, 1, {});
+
+function transformOriginRotation() {
+  twween.seek(0).kill(); //reset
+  twween = TweenLite.to(boxes, 1, {
+    rotation: 360,
+    transformOrigin: "50% 50%"
+  });
+  tweenCode.innerHTML = 'TweenLite.to(".enemies", 1, {rotation:360, transformOrigin:"50% 50%"});'
+};
+
 
 
 // PLAYER STUFF
 var player = board.append("image")
-                  .attr("x", 150)
-                  .attr("y", 100)
-                  .attr("height", "30px")
-                  .attr("width", "30px")
-                  .attr("xlink:href", "asteroid.png");
+  .attr("x", 180)
+  .attr("y", 130)
+  .attr("height", "50px")
+  .attr("width", "50px")
+  .attr("xlink:href", "http://i.giphy.com/JF98Z2md85OFi.gif");
 
 var checkCollision = function(enemy) {
   var enemyCx = parseFloat(enemy.attr('cx'));
@@ -61,16 +78,8 @@ var checkCollision = function(enemy) {
   var playerCx = parseFloat(player.attr('x'));
   var playerCy = parseFloat(player.attr('y'));
 
-  if (Math.hypot(enemyCx - playerCx, enemyCy - playerCy ) <= 25) {
-    // update high schore if needed
-    console.log("MUAHAHAA!!!");
-    // reset score to 0
-    // REFACTOR
-    if (gameStats.score > gameStats.bestScore) {
-      gameStats.bestScore = gameStats.score;
-      d3.select('.high span').text(gameStats.bestScore);
-    }
-    gameStats.score = 0;
+  if (Math.hypot(enemyCx - playerCx, enemyCy - playerCy) <= 25) {
+    resetScore();
     renderScore();
   }
 };
@@ -78,37 +87,35 @@ var checkCollision = function(enemy) {
 var tweenWithCollisionDetection = function(endData) {
   var enemy = d3.select(this);
 
-  return function (t) {
+  return function(t) {
     checkCollision(enemy);
   };
 };
 
 // MAKE THE PLAYER DRAGGABLE
-var mover = function () {
-  var minX = 0;
-  var maxX = gameOptions.width - parseInt(d3.select('image').attr('width'));
-  var minY = 0;
-  var maxY = gameOptions.height - parseInt(d3.select('image').attr('height'));
+var _checkInBounds = function(eventNum, isX) {
+  var min = 0;
+  var max;
 
-  if (d3.event.x < minX) {
-    var x = 0;
-  } else if (d3.event.x > maxX) {
-    var x = maxX;
+  if (isX) {
+    max = gameOptions.width - parseInt(d3.select('image').attr('width'));
   } else {
-    var x = d3.event.x;
+    max = gameOptions.height - parseInt(d3.select('image').attr('height'));
   }
 
-  if (d3.event.y < minY) {
-    var y = 0;
-  } else if (d3.event.y > maxY) {
-    var y = maxY;
+  if (eventNum < min) {
+    return 0;
+  } else if (eventNum > max) {
+    return max;
   } else {
-    var y = d3.event.y;
+    return eventNum;
   }
+};
 
+var mover = function() {
   d3.select('image')
-    .attr("x", x)
-    .attr("y", y);
+    .attr("x", _checkInBounds(d3.event.x, true))
+    .attr("y", _checkInBounds(d3.event.y, false));
 };
 
 var drag = d3.behavior.drag().on("drag", mover);
@@ -126,6 +133,15 @@ var renderScore = function() {
   d3.select('.current span').text(gameStats.score);
 };
 
+var resetScore = function() {
+  if (gameStats.score > gameStats.bestScore) {
+    gameStats.bestScore = gameStats.score;
+    d3.select('.high span').text(gameStats.bestScore);
+  }
+  gameStats.score = 0;
+};
+
 // MAKE STUFF MOVE!! :D
+setInterval(transformOriginRotation, 2000);
 setInterval(moveEnemies, 2000);
 setInterval(increaseScore, 1000);
